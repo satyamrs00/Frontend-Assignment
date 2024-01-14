@@ -15,16 +15,18 @@ const JsonEditor = ({ setFormObject }) => {
     };
 
     return (
-        <TextField
-            id="outlined-multiline-static"
-            label="JSON"
-            multiline
-            fullWidth
-            
-            variant="outlined"
-            onChange={handleChange}
-            value={jsonText}
-        />
+        <div className=' overflow-y-scroll h-full w-full'>
+            <TextField
+                id="outlined-multiline-static"
+                label="JSON"
+                multiline
+                fullWidth
+                
+                variant="outlined"
+                onChange={handleChange}
+                value={jsonText}
+            />
+        </div>
     )
 }
 
