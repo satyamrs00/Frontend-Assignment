@@ -267,21 +267,43 @@ const RenderForm = ({ formObject }) => {
                 )
             ))}
             <div className="flex gap-4 justify-end">
-                <FormControlLabel 
-                    control={<Switch 
-                        checked={advanced?.includes('all')}
-                        onChange={(e) => {
-                            if (e.target.checked) {
-                                setAdvanced([...advanced, 'all'])
+                {formObject?.reduce((acc, item) => {
+                    if (item?.uiType === 'Group') {
+                        return acc && item?.subParameters?.reduce((acc, subItem) => {
+                            if (subItem?.uiType === 'Ignore') {
+                                return acc && subItem?.subParameters?.reduce((acc, subSubItem) => {
+                                    if (!subSubItem?.validate?.required) {
+                                        return true
+                                    } return acc
+                                }, true)
                             } else {
-                                setAdvanced(advanced?.filter((adv) => adv !== 'all'))
+                                if (!subItem?.validate?.required) {
+                                    return true
+                                } return acc
                             }
-                        }}
-                    />} 
-                    sx={{ marginRight: 'auto', marginLeft: 0 }}
-                    label="Show advanced options" 
-                    labelPlacement="start"
-                />
+                        }, true)
+                    } else {
+                        if (!item?.validate?.required) {
+                            return true
+                        } return acc
+                    } 
+                }, false) && (
+                    <FormControlLabel 
+                        control={<Switch 
+                            checked={advanced?.includes('all')}
+                            onChange={(e) => {
+                                if (e.target.checked) {
+                                    setAdvanced([...advanced, 'all'])
+                                } else {
+                                    setAdvanced(advanced?.filter((adv) => adv !== 'all'))
+                                }
+                            }}
+                        />} 
+                        sx={{ marginRight: 'auto', marginLeft: 0 }}
+                        label="Show advanced options" 
+                        labelPlacement="start"
+                    />
+                )}
                 <Button 
                     variant="contained" 
                     color="primary"
