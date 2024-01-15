@@ -10,26 +10,34 @@ import FormSwitch from "./FormSwitch";
 
 const RenderForm = ({ formObject }) => {
 
-
     const validate = values => {
         const errors = {};
         formObject?.map((item, index) => {
             if (item?.uiType === 'Group') {
                 item?.subParameters?.map((subItem, subIndex) => {
-                    if (subItem?.validate?.required && [null, undefined, ''].includes(values[item?.jsonKey]?.[subItem?.jsonKey])) {
-                        errors[item?.jsonKey] = { ...errors[item?.jsonKey], [subItem?.jsonKey]: 'Required' };
-                    } else if (subItem?.validate?.pattern && !subItem?.validate?.pattern?.test(values[item?.jsonKey]?.[subItem?.jsonKey])) {
-                        errors[item?.jsonKey] = { ...errors[item?.jsonKey], [subItem?.jsonKey]: subItem?.validate?.pattern?.message };
+                    if (subItem?.uiType === 'Ignore') {
+                        subItem?.subParameters?.map((subSubItem, subSubIndex) => {
+                            if (subSubItem?.validate?.required && [null, undefined, ''].includes(values[item?.jsonKey]?.[subItem?.jsonKey]?.[subSubItem?.jsonKey])) {
+                                errors[item?.jsonKey] = { ...errors[item?.jsonKey], [subItem?.jsonKey]: { ...errors[item?.jsonKey]?.[subItem?.jsonKey], [subSubItem?.jsonKey]: 'Required' } };
+                            } else if (subSubItem?.validate?.pattern && !subSubItem?.validate?.pattern?.test(values[item?.jsonKey]?.[subItem?.jsonKey]?.[subSubItem?.jsonKey])) {
+                                errors[item?.jsonKey] = { ...errors[item?.jsonKey], [subItem?.jsonKey]: { ...errors[item?.jsonKey]?.[subItem?.jsonKey], [subSubItem?.jsonKey]: subSubItem?.validate?.pattern?.message } };
+                            }
+                        })
+                    } else {
+                        if (subItem?.validate?.required && [null, undefined, ''].includes(values[item?.jsonKey]?.[subItem?.jsonKey])) {
+                            errors[item?.jsonKey] = { ...errors[item?.jsonKey], [subItem?.jsonKey]: 'Required' };
+                        } else if (subItem?.validate?.pattern && !subItem?.validate?.pattern?.test(values[item?.jsonKey]?.[subItem?.jsonKey])) {
+                            errors[item?.jsonKey] = { ...errors[item?.jsonKey], [subItem?.jsonKey]: subItem?.validate?.pattern?.message };
+                        }
                     }
-                    return null;
                 })
-            } 
-            if (item?.validate?.required && [null, undefined, ''].includes(values[item?.jsonKey])) {
-                errors[item?.jsonKey] = 'Required';
-            } else if (item?.validate?.pattern && !item?.validate?.pattern?.test(values[item?.jsonKey])) {
-                errors[item?.jsonKey] = item?.validate?.pattern?.message;
+            } else {
+                if (item?.validate?.required && [null, undefined, ''].includes(values[item?.jsonKey])) {
+                    errors[item?.jsonKey] = 'Required';
+                } else if (item?.validate?.pattern && !item?.validate?.pattern?.test(values[item?.jsonKey])) {
+                    errors[item?.jsonKey] = item?.validate?.pattern?.message;
+                }    
             }
-            return null;
         })
         return errors;
     }
@@ -43,23 +51,31 @@ const RenderForm = ({ formObject }) => {
     })
 
     useEffect(() => {
+        form.resetForm()
         formObject?.map((item, index) => {
             if (item?.uiType === 'Group') {
-
+                const val = {}
                 item?.subParameters?.map((subItem, subIndex) => {
-                    form.setFieldValue(item?.jsonKey, { ...form.values[item?.jsonKey], [subItem?.jsonKey]: subItem?.validate?.defaultValue })
-                    return null;
+                    if (subItem?.uiType === 'Ignore') {
+                        const subVal = {}
+                        subItem?.subParameters?.map((subSubItem, subSubIndex) => {
+                            subVal[subSubItem?.jsonKey] = subSubItem?.validate?.defaultValue || ""
+                        })
+                        val[subItem?.jsonKey] = subVal
+                    } else {
+                        val[subItem?.jsonKey] = subItem?.validate?.defaultValue || ''
+                    }
                 })
+                form.setFieldValue(item?.jsonKey, val)
             } else {
-                form.setFieldValue(item?.jsonKey, item?.validate?.defaultValue)
+                form.setFieldValue(item?.jsonKey, item?.validate?.defaultValue || '')
             }
-            return null;
         })
     
     }, [formObject])
 
     return (
-        <div className="w-full h-full rounded-xl border-2 p-4 flex flex-col gap-4 overflow-y-scroll">
+        <form className="w-full h-full rounded-xl border-2 p-4 flex flex-col gap-4 overflow-y-scroll" onSubmit={form.handleSubmit}>
             <div className="bg-[#e5e7eb] h-[2px] w-full"></div>
             {formObject && formObject?.sort((a, b) => a?.sort - b?.sort)?.map((item, index) => (
 
@@ -99,10 +115,11 @@ const RenderForm = ({ formObject }) => {
 
                             subItem?.uiType === 'Radio' ? (
                                 <FormRadio 
-                                    key={subIndex} options={subItem?.validate?.options} 
+                                    key={subIndex} 
+                                    options={subItem?.validate?.options} 
                                     disabled={subItem?.validate?.immutable} 
                                     error={form.touched[item?.jsonKey]?.[subItem?.jsonKey] && form.errors[item?.jsonKey]?.[subItem?.jsonKey]}
-                                    value={form.values[item?.jsonKey]?.[subItem?.jsonKey]}
+                                    value={form.values[item?.jsonKey]?.[subItem?.jsonKey] || ""}
                                     onChange={(newValue) => form.setFieldValue(item?.jsonKey, { ...form.values[item?.jsonKey], [subItem?.jsonKey]: newValue })}
                                     onBlur={() => form.setFieldTouched(item?.jsonKey, { ...form.touched[item?.jsonKey], [subItem?.jsonKey]: true })}
                                     errorText={form.errors[item?.jsonKey]?.[subItem?.jsonKey]}
@@ -147,32 +164,32 @@ const RenderForm = ({ formObject }) => {
                                             subSubItem?.uiType === 'Select' ? (
                                                 <FormSelect
                                                     item={subSubItem}
-                                                    value={form.values[item?.jsonKey]?.[subSubItem?.jsonKey]}
-                                                    onChange={(newValue) => form.setFieldValue(item?.jsonKey, { ...form.values[item?.jsonKey], [subSubItem?.jsonKey]: newValue })}
-                                                    onBlur={() => form.setFieldTouched(item?.jsonKey, { ...form.touched[item?.jsonKey], [subSubItem?.jsonKey]: true })}
-                                                    error={form.touched[item?.jsonKey]?.[subSubItem?.jsonKey] && form.errors[item?.jsonKey]?.[subSubItem?.jsonKey]}
-                                                    errorText={form.errors[item?.jsonKey]?.[subSubItem?.jsonKey]}
+                                                    value={form.values[item?.jsonKey]?.[subItem?.jsonKey]?.[subSubItem?.jsonKey] || ""}
+                                                    onChange={(newValue) => form.setFieldValue(item?.jsonKey, { ...form.values[item?.jsonKey], [subItem?.jsonKey]: { ...form.values[item?.jsonKey]?.[subItem?.jsonKey], [subSubItem?.jsonKey]: newValue } })}
+                                                    onBlur={() => form.setFieldTouched(item?.jsonKey, { ...form.touched[item?.jsonKey], [subItem?.jsonKey]: { ...form.touched[item?.jsonKey]?.[subItem?.jsonKey], [subSubItem?.jsonKey]: true } })}
+                                                    error={form.touched[item?.jsonKey]?.[subItem?.jsonKey]?.[subSubItem?.jsonKey] && form.errors[item?.jsonKey]?.[subItem?.jsonKey]?.[subSubItem?.jsonKey]}
+                                                    errorText={form.touched[item?.jsonKey]?.[subItem?.jsonKey]?.[subSubItem?.jsonKey] && form.errors[item?.jsonKey]?.[subItem?.jsonKey]?.[subSubItem?.jsonKey]}
                                                     options={subSubItem?.validate?.options}
                                                     placeholder={subSubItem?.placeholder}
                                                 />
                                             ) : subSubItem?.uiType === 'Input' ? (
                                                 <FormInput
                                                     item={subSubItem}
-                                                    value={form.values[item?.jsonKey]?.[subSubItem?.jsonKey]}
-                                                    onChange={(newValue) => form.setFieldValue(item?.jsonKey, { ...form.values[item?.jsonKey], [subSubItem?.jsonKey]: newValue })}
-                                                    onBlur={() => form.setFieldTouched(item?.jsonKey, { ...form.touched[item?.jsonKey], [subSubItem?.jsonKey]: true })}
-                                                    error={form.touched[item?.jsonKey]?.[subSubItem?.jsonKey] && form.errors[item?.jsonKey]?.[subSubItem?.jsonKey]}
-                                                    errorText={form.errors[item?.jsonKey]?.[subSubItem?.jsonKey]}
+                                                    value={form.values[item?.jsonKey]?.[subItem?.jsonKey]?.[subSubItem?.jsonKey]}
+                                                    onChange={(newValue) => form.setFieldValue(item?.jsonKey, { ...form.values[item?.jsonKey], [subItem?.jsonKey]: { ...form.values[item?.jsonKey]?.[subItem?.jsonKey], [subSubItem?.jsonKey]: newValue } })}
+                                                    onBlur={() => form.setFieldTouched(item?.jsonKey, { ...form.touched[item?.jsonKey], [subItem?.jsonKey]: { ...form.touched[item?.jsonKey]?.[subItem?.jsonKey], [subSubItem?.jsonKey]: true } })}
+                                                    error={form.touched[item?.jsonKey]?.[subItem?.jsonKey]?.[subSubItem?.jsonKey] && form.errors[item?.jsonKey]?.[subItem?.jsonKey]?.[subSubItem?.jsonKey]}
+                                                    errorText={form.touched[item?.jsonKey]?.[subItem?.jsonKey]?.[subSubItem?.jsonKey] && form.errors[item?.jsonKey]?.[subItem?.jsonKey]?.[subSubItem?.jsonKey]}
                                                     placeholder={subSubItem?.placeholder}
                                                 />
                                             ) : subSubItem?.uiType === 'Switch' && (
                                                 <FormSwitch
                                                     item={subSubItem}
-                                                    value={form.values[item?.jsonKey]?.[subSubItem?.jsonKey]}
-                                                    onChange={(newValue) => form.setFieldValue(item?.jsonKey, { ...form.values[item?.jsonKey], [subSubItem?.jsonKey]: newValue })}
-                                                    onBlur={() => form.setFieldTouched(item?.jsonKey, { ...form.touched[item?.jsonKey], [subSubItem?.jsonKey]: true })}
-                                                    error={form.touched[item?.jsonKey]?.[subSubItem?.jsonKey] && form.errors[item?.jsonKey]?.[subSubItem?.jsonKey]}
-                                                    errorText={form.errors[item?.jsonKey]?.[subSubItem?.jsonKey]}
+                                                    value={form.values[item?.jsonKey]?.[subItem?.jsonKey]?.[subSubItem?.jsonKey]}
+                                                    onChange={(newValue) => form.setFieldValue(item?.jsonKey, { ...form.values[item?.jsonKey], [subItem?.jsonKey]: { ...form.values[item?.jsonKey]?.[subItem?.jsonKey], [subSubItem?.jsonKey]: newValue } })}
+                                                    onBlur={() => form.setFieldTouched(item?.jsonKey, { ...form.touched[item?.jsonKey], [subItem?.jsonKey]: { ...form.touched[item?.jsonKey]?.[subItem?.jsonKey], [subSubItem?.jsonKey]: true } })}
+                                                    error={form.touched[item?.jsonKey]?.[subItem?.jsonKey]?.[subSubItem?.jsonKey] && form.errors[item?.jsonKey]?.[subItem?.jsonKey]?.[subSubItem?.jsonKey]}
+                                                    errorText={form.touched[item?.jsonKey]?.[subItem?.jsonKey]?.[subSubItem?.jsonKey] && form.errors[item?.jsonKey]?.[subItem?.jsonKey]?.[subSubItem?.jsonKey]}
                                                 />
                                             )
                                         ))}
@@ -188,11 +205,11 @@ const RenderForm = ({ formObject }) => {
             <Button 
                 variant="contained" 
                 color="primary"
-                onClick={form.handleSubmit}
+                type="submit"
             >
                 Submit
             </Button>
-        </div>
+        </form>
     )
 }
 
