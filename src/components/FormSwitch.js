@@ -7,7 +7,7 @@ const FormSwitch = ({ item, disabled, value, onChange, placeholder, error, error
             <FormControlLabel
                 control={
                     <Checkbox
-                        color='primary'
+                        color='black'
                         disabled={disabled}
                         fullWidth
                         size="small"

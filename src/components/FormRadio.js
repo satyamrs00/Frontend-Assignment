@@ -10,9 +10,10 @@ const FormRadio = ({ options, disabled, error, value, onChange, onBlur, errorTex
                     disabled={disabled}
                     label={<FormLabel item={option} />}
                     color={error ? 'secondary' : 'primary'}
-                    variant={value === option?.value ? 'filled' : 'outlined'}
+                    variant={value === option?.value ? 'outlined' : 'filled'}
                     onClick={() => onChange(option?.value)}
                     onBlur={() => onBlur()}
+                    size="large"
                 />
             ))}
             {error && (
