@@ -58,7 +58,7 @@ const RenderForm = ({ formObject }) => {
         initialValues: {},
         validate,
         onSubmit: values => {
-            const result = values
+            const result = {}
             formObject?.map((item, index) => {
                 if (item?.uiType === 'Group') {
                     const val = {}
@@ -73,17 +73,17 @@ const RenderForm = ({ formObject }) => {
                             }, true)) {
                                 const subVal = {}
                                 subItem?.subParameters?.map((subSubItem, subSubIndex) => {
-                                    if (!subSubItem.disable) { subVal[subSubItem?.jsonKey] = subSubItem?.validate?.defaultValue || "" }
+                                    if (!subSubItem.disable) { subVal[subSubItem?.jsonKey] = values[item?.jsonKey]?.[subItem?.jsonKey]?.[subSubItem?.jsonKey] || "" }
                                 })
                                 val[subItem?.jsonKey] = subVal
                             }
                         } else {
-                            if (!subItem?.disable) { val[subItem?.jsonKey] = subItem?.validate?.defaultValue || "" }
+                            if (!subItem?.disable) { val[subItem?.jsonKey] = values[item?.jsonKey]?.[subItem?.jsonKey] || "" }
                         }
                     })
                     result[item?.jsonKey] = val
                 } else {
-                    if (!item?.disable) { result[item?.jsonKey] = item?.validate?.defaultValue || "" }
+                    if (!item?.disable) { result[item?.jsonKey] = values[item?.jsonKey] || "" }
                 }
             })
 
