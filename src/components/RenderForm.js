@@ -73,17 +73,17 @@ const RenderForm = ({ formObject }) => {
                             }, true)) {
                                 const subVal = {}
                                 subItem?.subParameters?.map((subSubItem, subSubIndex) => {
-                                    if (!subSubItem.disable) { subVal[subSubItem?.jsonKey] = values[item?.jsonKey]?.[subItem?.jsonKey]?.[subSubItem?.jsonKey] || "" }
+                                    if (!subSubItem.disable) { subVal[subSubItem?.jsonKey] = values[item?.jsonKey]?.[subItem?.jsonKey]?.[subSubItem?.jsonKey] }
                                 })
                                 val[subItem?.jsonKey] = subVal
                             }
                         } else {
-                            if (!subItem?.disable) { val[subItem?.jsonKey] = values[item?.jsonKey]?.[subItem?.jsonKey] || "" }
+                            if (!subItem?.disable) { val[subItem?.jsonKey] = values[item?.jsonKey]?.[subItem?.jsonKey] }
                         }
                     })
                     result[item?.jsonKey] = val
                 } else {
-                    if (!item?.disable) { result[item?.jsonKey] = values[item?.jsonKey] || "" }
+                    if (!item?.disable) { result[item?.jsonKey] = values[item?.jsonKey] }
                 }
             })
 
@@ -102,16 +102,16 @@ const RenderForm = ({ formObject }) => {
                     if (subItem?.uiType === 'Ignore') {
                         const subVal = {}
                         subItem?.subParameters?.map((subSubItem, subSubIndex) => {
-                            subVal[subSubItem?.jsonKey] = subSubItem?.validate?.defaultValue || ""
+                            subVal[subSubItem?.jsonKey] = [undefined, null, ''].includes(subSubItem?.validate?.defaultValue) ? '' : subSubItem?.validate?.defaultValue
                         })
                         val[subItem?.jsonKey] = subVal
                     } else {
-                        val[subItem?.jsonKey] = subItem?.validate?.defaultValue || ''
+                        val[subItem?.jsonKey] = [undefined, null, ''].includes(subItem?.validate?.defaultValue) ? '' : subItem?.validate?.defaultValue
                     }
                 })
                 form.setFieldValue(item?.jsonKey, val)
             } else {
-                form.setFieldValue(item?.jsonKey, item?.validate?.defaultValue || '')
+                form.setFieldValue(item?.jsonKey, [undefined, null, ''].includes(item?.validate?.defaultValue) ? '' : item?.validate?.defaultValue)
             }
         })
     
